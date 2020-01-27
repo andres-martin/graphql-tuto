@@ -1,42 +1,19 @@
 import express from 'express';
 import graphqlHTTP from 'express-graphql';
-import { makeExecutableSchema } from 'graphql-tools';
+import {
+  GraphQLInt,
+  GraphQLObjectType,
+  GraphQLSchema,
+  GraphQLString,
+  GraphQLList,
+  GraphQLScalarType,
+  GraphQLInputObjectType,
+} from 'graphql';
 import { find } from 'lodash';
 // import { graphql } from 'graphql';
 // import schema from './schema';
 
 const app = express();
-
-const typeDefs = `
-  type Link {
-    id: Int! @unique
-    url: String!
-    description: String!
-    author: User!
-    comments: [Comment!]
-  }
-  
-  type User {
-    id: Int! @unique
-    username: String!
-    about: String!
-  }
-
-  type Comment {
-    id: Int! @unique
-    parent: Comment
-    comments: [Comment]
-    author: User!
-    content: String!
-  }
-
-  type Query {
-    allLinks: [Link!]!
-    link(id: Int!): Link
-    allUsers: [User!]!
-    user(id: Int!): User
-  }
-`;
 
 const links = [
   { id: 0, author: 0, url: 'https://google.com', description: 'Google' },
@@ -62,26 +39,30 @@ function getComments(commentID) {
   return null;
 }
 
-const resolvers = {
-  Query: {
-    allLinks: () => links,
-    link: (_, { id }) => find(links, { id }),
-    allUsers: () => users,
-    user: (_, { id }) => find(users, { id }),
+const userType = new GraphQLObjectType({
+  name: 'User',
+  fields: {
+    id: { type: GraphQLInt },
+    usename: { type: GraphQLString },
+    about: { type: GraphQLString },
   },
-  Link: {
-    author: ({ author }) => find(users, { id: author }),
-    comments: ({ comments }) => comments.map(i => find(commentsList, { id: i })),
-  },
-  Comment: {
-    author: ({ author }) => find(users, { id: author }),
-    comments: ({ id }) => getComments(id),
-  },
-};
+});
 
-const schema = makeExecutableSchema({
-  typeDefs,
-  resolvers,
+const commentsType = new GraphQLInputObjectType({
+  name: 'Comments',
+  fields: {
+    id: { type: GraphQLInt },
+    parent: { type: commentType },
+    comments: {
+      type: new GraphQLList(commentsType),
+      args: {
+        id: { type: GraphQLInt },
+      },
+      resolve: (_, { id }) => getComments(id),
+    },
+    author: { type: userType },
+    args: {},
+  },
 });
 
 app.use('/graphql', graphqlHTTP({ schema, graphiql: true }));
