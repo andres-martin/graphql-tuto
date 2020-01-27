@@ -5,8 +5,9 @@
   "author": "Tyler Reckart <tyler.reckart@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "start": "babel-node ./server.js",
-    "dev": "nodemon server.js --exec babel-node"
+    "start": "npm run start:server",
+    "start:server": "babel-node ./src/server",
+    "dev:server": "nodemon --exec babel-node ./src/server"
   },
   "dependencies": {
     "babel-cli": "^6.26.0",
